@@ -2,6 +2,7 @@ import io
 from ini import Ini
 import re
 import os
+import json
 
 def readline(f: io.TextIOWrapper):
     arr = []
@@ -66,6 +67,20 @@ def makeTbl(src, dst, cs):
                 f.write(c)
             n += 1
 
+def mergeLink(src, dst, lines):
+    with open(src, "rt", encoding='utf-8') as f:
+        data = json.load(f)
+
+    di = 0
+    for v in data:
+        for vv in v:
+            if vv[0] == "TEXT":
+                vv[1] = lines[di]
+                di += 1
+    assert di == len(lines)
+
+    with open(dst, "wt", encoding='utf-8') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
 
 # 合并 raw 和 cn 文件到脚本
 # 并且自动检查错误，和替换 HEAD
@@ -81,3 +96,4 @@ def merge(ini: Ini):
 
     cs, lines = checkRawAndGet(fraw, frawcn)
     makeTbl(ftbl, ftblcn, cs)
+    mergeLink(flink, flinkcn, lines)
