@@ -1,8 +1,9 @@
-from io import TextIOWrapper
+import io
 from ini import Ini
 import re
+import os
 
-def readline(f: TextIOWrapper):
+def readline(f: io.TextIOWrapper):
     arr = []
     while True:
         line = f.readline()
@@ -13,7 +14,7 @@ def readline(f: TextIOWrapper):
         arr.append(line)
     return arr
 
-def checkRawGetAllChar(fsrc, fdst):
+def checkRawAndGet(fsrc, fdst):
     with open(fsrc, "rt", encoding='utf-8') as f:
         src = f.readlines()
     with open(fdst, "rt", encoding='utf-8') as f:
@@ -31,17 +32,52 @@ def checkRawGetAllChar(fsrc, fdst):
         if s == dst[i]:
             continue
 
-        assert ctrlRe.findall(s) == ctrlRe.findall(dst[i])
+        assert ctrlRe.findall(s) == ctrlRe.findall(dst[i]), i
     arr = list(ss)
     arr.sort()
-    return arr
+    return arr, dst
+
+mark = '▷▽◲⍽◎0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz。、！？”$%&’￥=:⋯·.‘()―「」『』~‥♥；'
+
+def makeTbl(src, dst, cs):
+    cs2 = []
+    for c in cs:
+        if c not in mark:
+            cs2.append(c)
+
+    di = 0
+    n = 0
+    with open(src, "rt", encoding='utf-8') as f:
+        lines = f.readlines()
+
+    with open(dst, "wt", encoding='utf-8') as f:
+        for c in "".join(lines):
+            if c in ["\r", "\n"]:
+                continue
+
+            if n > 0 and n % 20 == 0:
+                f.write("\n")
+            if c in mark:
+                f.write(c)
+            elif di < len(cs2):
+                f.write(cs2[di])
+                di += 1
+            else:
+                f.write(c)
+            n += 1
+
 
 # 合并 raw 和 cn 文件到脚本
 # 并且自动检查错误，和替换 HEAD
 def merge(ini: Ini):
-    name = "{}.{}".format(ini.link, ini.linkid()[0][0])
-    fsrc = name + ".raw.txt"
-    fdst = name + ".cn.raw.txt"
-    cs = checkRawGetAllChar(fsrc, fdst)
+    linkname = "{}.{}".format(ini.link, ini.linkid()[0][0])
+    flink = linkname + ".txt"
+    flinkcn = linkname + ".cn.txt"
+    fraw = linkname + ".raw.txt"
+    frawcn = linkname + ".cn.raw.txt"
+    fontname = "{}.{}".format(ini.font, ini.fontid)
+    ftbl = fontname + ".txt"
+    ftblcn = fontname + ".cn.txt"
 
-    print(cs)
+    cs, lines = checkRawAndGet(fraw, frawcn)
+    makeTbl(ftbl, ftblcn, cs)
