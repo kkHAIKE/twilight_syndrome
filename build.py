@@ -7,6 +7,8 @@ import pickle
 from fontdb import read20
 import io
 from rle import enc
+import json
+from linkdec import asm
 
 def mkfont(db, ftbl, fcnt, lib: FontLib, fbin):
 	cs = read20(ftbl)
@@ -32,6 +34,7 @@ def mkfont(db, ftbl, fcnt, lib: FontLib, fbin):
 			di += 1
 
 		b, sz = db[c]
+		assert sz > 0, c
 		lst.append((bin.tell(), sz, c))
 		rmap[c] = i
 		bin.write(enc(b))
@@ -41,14 +44,49 @@ def mkfont(db, ftbl, fcnt, lib: FontLib, fbin):
 		f.write(bin.getvalue())
 	return lst, rmap
 
+def mklink(lst, rmap, flink, dstlinks, linksep, linkcnt):
+	with open(flink, "rt", encoding='utf-8') as f:
+		link = json.load(f)
+	assert len(link) == linkcnt
+
+	bins = [io.BytesIO(), io.BytesIO()]
+	# code, secid, pp, func
+	lst = []
+
+	for v in link:
+		secid, codeH, codeL, func = v[0]
+		pp = 0xFFFFFFFF
+		if len(v) > 1:
+			dataid = 0
+			if linksep is not None and secid >= linksep:
+				dataid = 1
+			bin = bins[dataid]
+			pp = bin.tell()
+
+			tmp = io.BytesIO()
+			asm(rmap, tmp, v[1:])
+			bin.write(enc(tmp.getvalue()))
+
+			lst.append(((codeH<<4)|codeL, secid, pp, func))
+
+	for i, dst in enumerate(dstlinks):
+		with open(dst, "wb") as f:
+			f.write(bins[i].getvalue())
+	return lst
+
 def build(ini: Ini, lib: FontLib):
-	# 生成 字库 lst bin sz
 	fontdb = os.path.join(os.path.dirname(ini.font), 'font.db')
 	with open(fontdb, "rb") as f:
 		db = pickle.load(f)
 
 	fontname = "{}.{}".format(ini.font, ini.fontid)
 	ftbl = fontname + ".cn.txt"
-	dstfont = "{}.{}".format(ini.dstfont, ini.fontid)
-	fbin = dstfont + ".bin"
-	mkfont(db, ftbl, ini.fontcnt, lib, fbin)
+	fbin = "{}.{}.bin".format(ini.dstfont, ini.fontid)
+
+	linkname = "{}.{}".format(ini.link, ini.linkid()[0][0])
+	flink = linkname + ".cn.txt"
+	dstlinks = ["{}.{}.bin".format(ini.dstlink, id) for id in ini.linkid()[0]]
+
+	# 生成 字库 lst bin sz
+	flst, rmap = mkfont(db, ftbl, ini.fontcnt, lib, fbin)
+	llst = mklink(flst, rmap, flink, dstlinks, ini.linkid()[1], ini.linkcnt)

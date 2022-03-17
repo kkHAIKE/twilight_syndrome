@@ -6,6 +6,94 @@ import json
 from fontlib import FontLib
 from ini import Ini
 
+def mkcode(cmd0, cmd1, cmd2=0):
+    return struct.pack('<H', (cmd0<<14) | (cmd1<<8) | cmd2)
+
+def asmtxt(rmap, bin: io.BytesIO, txt: str):
+    sm = {
+        'BEGIN': 9,
+        'SPD': 3,
+        'WAIT': 4,
+        'RET': 1,
+        'PRESS': 5,
+        'NEXT': 6,
+        'END': 0xa,
+        'HEAD': 0xd,
+        'SEL': 0x17,
+        'COL': 2,
+        'CASE': 0x18,
+        'CEND': 0x28,
+        'x8B': 0xb,
+        'WAIT1': 0xf,
+    }
+
+    i = 0
+    while i < len(txt):
+        c = txt[i]
+        if c == '<':
+            idx = txt.index('>', i)
+            arr = txt[i+1: idx].split(',')
+            i = idx + 1
+
+            if arr[0] in sm:
+                cmd2 = 0
+                if len(arr) > 1:
+                    cmd2 = int(arr[1])
+                bin.write(mkcode(2, sm[arr[0]], cmd2))
+            else:
+                assert False
+        else:
+            bin.write(struct.pack("<H", rmap[c]))
+            i += 1
+
+def asm(rmap, bin: io.BytesIO, para):
+    sm = {
+        'xCF': 0xf,
+        'FINGO': 0xc,
+        'xD5': 0x15,
+        'xCA': 0xa,
+        'xD4': 0x14,
+        'xC4': 4,
+        'WAIT': 6,
+        'xC2': 2,
+        'xC5': 5,
+        'xC3': 3,
+        'xC9': 9,
+    }
+
+    for v in para:
+        if v[0] == 'FIRST':
+            bin.write(struct.pack("<H", v[1]))
+        elif v[0] == 'TEXT':
+            asmtxt(rmap, bin, v[1])
+        elif v[0] == 'FIN':
+            bin.write(b'\xff\xff')
+            for vv in v[1:]:
+                bin.write(struct.pack("<H", vv))
+        elif v[0] in sm:
+            cmd2 = 0
+            if len(v) > 1:
+                cmd2 = v[1]
+            bin.write(mkcode(3, sm[v[0]], cmd2))
+        elif v[0] == 'XA':
+            bin.write(mkcode(3, 8, v[1]))
+            bin.write(struct.pack("<H", v[2]))
+        elif v[0] == 'xCE':
+            assert v[1] in [0, 2, 1, 3, 4]
+            bin.write(mkcode(3, 0xe, v[1]))
+            if v[1] in [1, 3, 4]:
+                bin.write(struct.pack("<H", v[2]))
+        elif v[0] == 'xD0':
+            bin.write(mkcode(3, 0x10+v[1], 0))
+            bin.write(struct.pack("<H", v[2]))
+        elif v[0] == 'xD6':
+            bin.write(mkcode(3, 0x16+v[1], v[2]))
+            if v[2] < 2:
+                bin.write(struct.pack("<H", v[3]))
+        else:
+            assert False
+
+
 def dism(para: list, lines: list, asm: bytes, lib: FontLib):
     fc, = struct.unpack("<H", asm[:2])
     para.append(['FIRST', fc])
@@ -139,7 +227,7 @@ def dism(para: list, lines: list, asm: bytes, lib: FontLib):
 
         elif cmd0 == 0:
             assert intxt, "{},{}".format(i, hex(code))
-            txt.write(lib.get(code &0xfff))
+            txt.write(lib.get(code))# &0xfff))
         else:
             assert False
 
@@ -163,18 +251,15 @@ def linkdec(ini: Ini, lib: FontLib):
             assert ignore == 0
             para = [[secid, code>>4, code&0xf, func]]
 
-            sec2 = False
-            if linksep is not None:
-                sec2 = secid >= linksep
+            dataid = 0
+            if linksep is not None and secid >= linksep:
+                dataid = 1
 
             if pp != 0xFFFFFFFF:
-                assert (pp, sec2) not in ss, i
-                ss.add((pp, sec2))
+                assert (pp, dataid) not in ss, i
+                ss.add((pp, dataid))
 
-                if sec2:
-                    dst, _ = dec(linkdatas[1][pp - ini.linkbuf:])
-                else:
-                    dst, _ = dec(linkdatas[0][pp - ini.linkbuf:])
+                dst, _ = dec(linkdatas[dataid][pp - ini.linkbuf:])
                 # try:
                 dism(para, lines, dst, lib)
                 # except:

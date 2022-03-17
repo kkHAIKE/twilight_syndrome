@@ -33,7 +33,7 @@ def update(db, bin, txt, szf):
 
     txtarr = read20(txt)
      # 注意存了 0 大小
-    szarr = read20(szf)
+    szarr = [int(x,16) for x in read20(szf)]
 
     assert len(txtarr) == len(binarr)
     for i, c in enumerate(txtarr):
@@ -45,7 +45,10 @@ def update(db, bin, txt, szf):
             # if obin != binarr[i] or osz != szarr[i]:
             #     print('diffrent', c)
             #     continue
-        m[c] = (binarr[i], szarr[i])
+        szx = szarr[i]
+        if c == '￥'and szx == 0:
+           szx = 11
+        m[c] = (binarr[i], szx)
         m[hashlib.md5(binarr[i]).hexdigest()] = c
 
     with open(db, "wb") as f:
@@ -122,4 +125,5 @@ def main(argv):
     elif argv[1] == 'check':
         check(db, bin, txt)
 
-main(sys.argv)
+if __name__ == '__main__':
+    main(sys.argv)

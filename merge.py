@@ -108,7 +108,7 @@ def mergeLink(src, dst, lines):
     for v in data:
         for vv in v:
             if vv[0] == "TEXT":
-                line = lines[di]
+                line = lines[di].rstrip("\r\n")
                 line = headfix(line, di)
 
                 vv[1] = line
