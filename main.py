@@ -1,6 +1,7 @@
 from base64 import encode
 import configparser
 import sys
+from build import build
 from fontdec import fontdec
 from linkdec import linkdec
 from fontlib import (FontLib, dumpsz)
@@ -20,6 +21,8 @@ def main(argv):
         dumpsz(ini, FontLib(ini))
     elif argv[1] == 'merge':
         merge(ini)
+    elif argv[1] == 'build':
+        build(ini, FontLib(ini))
     elif argv[1] == 'test':
         fontlib = FontLib(ini)
         for c in "ユカリチサトミシマ":

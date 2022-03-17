@@ -4,6 +4,16 @@ import pickle
 import hashlib
 from rle import dec
 
+def read20(fpath):
+    ret = []
+    with open(fpath, "rt", encoding='utf-8') as f:
+        data = f.read()
+    for c in data:
+        if c in ["\r", "\n"]:
+            continue
+        ret.append(c)
+    return ret
+
 def update(db, bin, txt, szf):
     if os.path.exists(db):
         with open(db, "rb") as f:
@@ -21,27 +31,9 @@ def update(db, bin, txt, szf):
 
             binarr.append(data)
 
-    txtarr = []
-    with open(txt, "rt", encoding='utf-8') as f:
-        while True:
-            line = f.readline()
-            if not line:
-                break
-            line = line.rstrip("\r\n")
-
-            for c in line:
-                txtarr.append(c)
-    szarr = []
-    # 注意存了 0 大小
-    with open(szf, "rt") as f:
-        while True:
-            line = f.readline()
-            if not line:
-                break
-            line = line.rstrip("\r\n")
-
-            for c in line:
-                szarr.append(c)
+    txtarr = read20(txt)
+     # 注意存了 0 大小
+    szarr = read20(szf)
 
     assert len(txtarr) == len(binarr)
     for i, c in enumerate(txtarr):
@@ -108,16 +100,7 @@ def check(db, bin, txt):
 
             binarr.append(data)
 
-    txtarr = []
-    with open(txt, "rt", encoding='utf-8') as f:
-        while True:
-            line = f.readline()
-            if not line:
-                break
-            line = line.rstrip("\r\n")
-
-            for c in line:
-                txtarr.append(c)
+    txtarr = read20(txt)
 
     for i, data in enumerate(binarr):
         md5 = hashlib.md5(data).hexdigest()

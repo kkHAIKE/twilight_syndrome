@@ -18,6 +18,18 @@ class Ini:
         return os.path.join(self._proj.get('srcdir'), self._proj.get('font'))
 
     @property
+    def dstexe(self) -> str:
+        return os.path.join(self._proj.get('dstdir'), self._proj.get('exe'))
+
+    @property
+    def dstlink(self) -> str:
+        return os.path.join(self._proj.get('dstdir'), self._proj.get('link'))
+
+    @property
+    def dstfont(self) -> str:
+        return os.path.join(self._proj.get('dstdir'), self._proj.get('font'))
+
+    @property
     def fontid(self) -> int:
         return self._proj.getint('fontid')
 

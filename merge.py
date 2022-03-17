@@ -53,18 +53,21 @@ def makeTbl(src, dst, cs, need):
     ss = set(cs2)
     if os.path.exists(need):
         with open(need, "rt", encoding='utf-8-sig') as f:
-            ss -= set(f.read().rstrip("\r\n"))
+            ss |= set(f.read().rstrip("\r\n"))
 
-    with open(need, "at", encoding='utf-8-sig') as f:
-        f.write("".join(ss))
+    ssa = list(ss)
+    ssa.sort()
+    with open(need, "wt", encoding='utf-8-sig') as f:
+        for c in ssa:
+            f.write(c)
 
     di = 0
     n = 0
     with open(src, "rt", encoding='utf-8') as f:
-        lines = f.readlines()
+        data = f.read()
 
     with open(dst, "wt", encoding='utf-8') as f:
-        for c in "".join(lines):
+        for c in data:
             if c in ["\r", "\n"]:
                 continue
 
