@@ -22,7 +22,7 @@ def checkRawAndGet(fsrc, fdst):
         dst = f.readlines()
     assert len(src) == len(dst)
 
-    ctrlRe = re.compile(r'<[^>]+>')
+    ctrlRe = re.compile(r'(<[^>]+>)|⍽')
     ss = set()
     for i, s in enumerate(src):
         raw = ctrlRe.sub('', dst[i])
@@ -33,18 +33,30 @@ def checkRawAndGet(fsrc, fdst):
         if s == dst[i]:
             continue
 
+        # print(ctrlRe.findall(s), ",", ctrlRe.findall(dst[i]))
+        # if i in [55]:
+        #     continue
         assert ctrlRe.findall(s) == ctrlRe.findall(dst[i]), i
     arr = list(ss)
     arr.sort()
     return arr, dst
 
-mark = '▷▽◲⍽◎0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz。、！？”$%&’￥=:⋯·.‘()―「」『』~‥♥；'
+mark = '▷▽◲⍽◎0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz' + \
+    'ー。、！？”$%&’￥=:⋯·.‘()―「」『』~‥♥；'
 
-def makeTbl(src, dst, cs):
+def makeTbl(src, dst, cs, need):
     cs2 = []
     for c in cs:
         if c not in mark:
             cs2.append(c)
+
+    ss = set(cs2)
+    if os.path.exists(need):
+        with open(need, "rt", encoding='utf-8-sig') as f:
+            ss -= set(f.read().rstrip("\r\n"))
+
+    with open(need, "at", encoding='utf-8-sig') as f:
+        f.write("".join(ss))
 
     di = 0
     n = 0
@@ -67,6 +79,24 @@ def makeTbl(src, dst, cs):
                 f.write(c)
             n += 1
 
+        while di < len(cs2):
+            if n > 0 and n % 20 == 0:
+                f.write("\n")
+            f.write(cs2[di])
+            di += 1
+            n += 1
+
+def headfix(line, di):
+    headRe = re.compile(r'<HEAD,(\d)>')
+    for m in headRe.finditer(line):
+        n = int(m.group(1))
+        idx = line.index(':', m.end(0))
+        n2 = idx - m.end(0)
+        assert n2 > 0 and n2 < 4, "{},{},{},{}".format(n, n2, di, line)
+        if n != n2:
+            line = line[:m.start(1)] + str(n2) + line[m.end(1):]
+    return line
+
 def mergeLink(src, dst, lines):
     with open(src, "rt", encoding='utf-8') as f:
         data = json.load(f)
@@ -75,7 +105,10 @@ def mergeLink(src, dst, lines):
     for v in data:
         for vv in v:
             if vv[0] == "TEXT":
-                vv[1] = lines[di]
+                line = lines[di]
+                line = headfix(line, di)
+
+                vv[1] = line
                 di += 1
     assert di == len(lines)
 
@@ -93,7 +126,8 @@ def merge(ini: Ini):
     fontname = "{}.{}".format(ini.font, ini.fontid)
     ftbl = fontname + ".txt"
     ftblcn = fontname + ".cn.txt"
+    need = ini.font + ".need.txt"
 
     cs, lines = checkRawAndGet(fraw, frawcn)
-    makeTbl(ftbl, ftblcn, cs)
+    makeTbl(ftbl, ftblcn, cs, need)
     mergeLink(flink, flinkcn, lines)
