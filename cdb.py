@@ -35,6 +35,9 @@ class CDB:
         self._seek(idx)
         self._f.write(data)
 
+        for _ in range(on*2048 - len(data)):
+            self._f.write(b'\0')
+
 def main(argv):
     db = CDB(argv[1])
     idx = int(argv[2])

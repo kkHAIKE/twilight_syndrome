@@ -22,17 +22,28 @@ def mkfont(db, ftbl, fcnt, lib: FontLib, fbin):
 	# 字体反查
 	rmap = {}
 
+	mm = {}
+	mmr = {}
+	for i in range(fcnt):
+		c = lib.get(i)
+		if c in mark:
+			mm[i] = c
+			mmr[c] = i
+
 	i = 0
 	di = 0
 	while di < len(cs):
 		c = None
-		if i < fcnt:
-			c = lib.get(i)
-			if c not in mark:
-				c = None
-		if c is None:
-			c = cs[di]
-			di += 1
+		if i in mm:
+			c = mm[i]
+		else:
+			while di < len(cs):
+				tc = cs[di]
+				di += 1
+				if tc not in mmr:
+					c = tc
+					break
+		assert c is not None
 
 		b, sz = db[c]
 		assert sz > 0, c
@@ -40,6 +51,8 @@ def mkfont(db, ftbl, fcnt, lib: FontLib, fbin):
 		rmap[c] = i
 		bin.write(enc(b))
 		i += 1
+
+	assert i == len(cs)
 
 	with open(fbin, "wb") as f:
 		f.write(bin.getvalue())

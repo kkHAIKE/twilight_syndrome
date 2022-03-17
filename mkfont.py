@@ -70,7 +70,7 @@ def onefont(img, c: FontInfo):
             break
 
     w = c.w - lp - rp
-    assert w > 2 and w <= 16
+    assert w > 2 and w < 16
 
     yo = c.yo + 1
     sx, sy = c.x + lp, c.y
@@ -105,10 +105,12 @@ def onefont(img, c: FontInfo):
                 assert False, clr
 
             if xx % 2 == 0:
+                bin[(dy + yy)*8 + xx//2] &= 0xf0
                 bin[(dy + yy)*8 + xx//2] |= code
             else:
+                bin[(dy + yy)*8 + xx//2] &= 0xf
                 bin[(dy + yy)*8 + xx//2] |= code << 4
-    return chr(c.code), bin, w-2
+    return chr(c.code), bin, w-1
 
 def mkfont(fpath):
     name, arr = readFnt(fpath)
