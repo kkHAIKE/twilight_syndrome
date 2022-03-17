@@ -9,6 +9,7 @@ import io
 from rle import enc
 import json
 from linkdec import asm
+import struct
 
 def mkfont(db, ftbl, fcnt, lib: FontLib, fbin):
 	cs = read20(ftbl)
@@ -74,6 +75,21 @@ def mklink(lst, rmap, flink, dstlinks, linksep, linkcnt):
 			f.write(bins[i].getvalue())
 	return lst
 
+def patchexe(flst, llst, ini: Ini):
+	# 写码表
+	with open(ini.dstexe, "rb+") as f:
+		f.seek(ini.dstfonttbl)
+
+		for off, sz, _ in flst:
+			f.write(struct.pack("<2I", ini.fontbuf+off, sz))
+
+		f.seek(ini.linktbl - ini.base)
+
+		for code, secid, pp, func in llst:
+			if pp != 0xFFFFFFFF:
+				pp += ini.linkbuf
+			f.write(struct.pack("<2BH2I", code, secid, 0, pp, func))
+
 def build(ini: Ini, lib: FontLib):
 	fontdb = os.path.join(os.path.dirname(ini.font), 'font.db')
 	with open(fontdb, "rb") as f:
@@ -89,4 +105,7 @@ def build(ini: Ini, lib: FontLib):
 
 	# 生成 字库 lst bin sz
 	flst, rmap = mkfont(db, ftbl, ini.fontcnt, lib, fbin)
+	print(hex(len(flst)*8))
 	llst = mklink(flst, rmap, flink, dstlinks, ini.linkid()[1], ini.linkcnt)
+	if ini.dstfonttbl > 0:
+		patchexe(flst, llst, ini)

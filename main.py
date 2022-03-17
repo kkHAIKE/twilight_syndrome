@@ -1,4 +1,3 @@
-from base64 import encode
 import configparser
 import sys
 from build import build

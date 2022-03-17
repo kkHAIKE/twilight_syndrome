@@ -1,9 +1,14 @@
 import configparser
 import os
+import struct
 
 class Ini:
     def __init__(self, proj: configparser.SectionProxy):
         self._proj = proj
+
+        with open(self.exe, "rb") as f:
+            f.seek(0x018)
+            self._base = struct.unpack("<I", f.read(4))[0] - 0x800
 
     @property
     def exe(self) -> str:
@@ -45,7 +50,7 @@ class Ini:
 
     @property
     def base(self) -> int:
-        return self._hex('base')
+        return self._base
 
     @property
     def fontbuf(self) -> int:
@@ -54,6 +59,10 @@ class Ini:
     @property
     def fonttbl(self) -> int:
         return self._hex('fonttbl')
+
+    @property
+    def dstfonttbl(self) -> int:
+        return self._hex('dstfonttbl')
 
     @property
     def fontcnt(self) -> int:
