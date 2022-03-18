@@ -5,6 +5,7 @@ import io
 import json
 from fontlib import FontLib
 from ini import Ini
+import binascii
 
 def mkcode(cmd0, cmd1, cmd2=0):
     return struct.pack('<H', (cmd0<<14) | (cmd1<<8) | cmd2)

@@ -6,7 +6,7 @@ import os
 import pickle
 from fontdb import read20
 import io
-from rle import enc
+from rle import (enc, dec)
 import json
 from linkdec import asm
 import struct
@@ -14,8 +14,19 @@ import struct
 def mkfont(db, ftbl, fcnt, lib: FontLib, fbin):
 	cs = read20(ftbl)
 
+	# 先准备 bin
 	bin = io.BytesIO()
 	bin.write(enc(db['PAL']))
+
+	mpos = {}
+	for c in cs:
+		b, sz = db[c]
+		assert sz > 0, c
+		mpos[c] = (bin.tell(), sz)
+		bin.write(enc(b))
+
+	with open(fbin, "wb") as f:
+		f.write(bin.getvalue())
 
 	# idx -> off, sz, 字
 	lst = []
@@ -23,12 +34,12 @@ def mkfont(db, ftbl, fcnt, lib: FontLib, fbin):
 	rmap = {}
 
 	mm = {}
-	mmr = {}
+	mmr = set()
 	for i in range(fcnt):
 		c = lib.get(i)
 		if c in mark:
 			mm[i] = c
-			mmr[c] = i
+			mmr.add(c)
 
 	i = 0
 	di = 0
@@ -45,17 +56,12 @@ def mkfont(db, ftbl, fcnt, lib: FontLib, fbin):
 					break
 		assert c is not None
 
-		b, sz = db[c]
-		assert sz > 0, c
-		lst.append((bin.tell(), sz, c))
+		lst.append(mpos[c])
 		rmap[c] = i
-		bin.write(enc(b))
 		i += 1
 
 	assert i == len(cs)
 
-	with open(fbin, "wb") as f:
-		f.write(bin.getvalue())
 	return lst, rmap
 
 def mklink(lst, rmap, flink, dstlinks, linksep, linkcnt):
@@ -79,9 +85,12 @@ def mklink(lst, rmap, flink, dstlinks, linksep, linkcnt):
 
 			tmp = io.BytesIO()
 			asm(rmap, tmp, v[1:])
-			bin.write(enc(tmp.getvalue()))
 
-			lst.append(((codeH<<4)|codeL, secid, pp, func))
+			encb = enc(tmp.getvalue())
+			assert dec(encb)[0] == tmp.getvalue()
+			bin.write(encb)
+
+		lst.append(((codeH<<4)|codeL, secid, pp, func))
 
 	for i, dst in enumerate(dstlinks):
 		with open(dst, "wb") as f:
@@ -91,12 +100,16 @@ def mklink(lst, rmap, flink, dstlinks, linksep, linkcnt):
 def patchexe(flst, llst, ini: Ini):
 	# 写码表
 	with open(ini.dstexe, "rb+") as f:
-		f.seek(ini.dstfonttbl)
+		# 读取新 base
+		f.seek(0x018)
+		base = struct.unpack("<I", f.read(4))[0] - 0x800
 
-		for off, sz, _ in flst:
+		f.seek(ini.dstfonttbl - base)
+
+		for off, sz in flst:
 			f.write(struct.pack("<2I", ini.fontbuf+off, sz))
 
-		f.seek(ini.linktbl - ini.base)
+		f.seek(ini.linktbl - base)
 
 		for code, secid, pp, func in llst:
 			if pp != 0xFFFFFFFF:

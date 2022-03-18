@@ -30,6 +30,7 @@ class CDB:
     def write(self, idx, data):
         n = (len(data) + 2047) // 2048
         on = self.head[idx][1]
+        print(on, "->", n)
         assert n <= on, "{},{}".format(n, on)
 
         self._seek(idx)
