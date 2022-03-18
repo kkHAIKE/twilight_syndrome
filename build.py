@@ -98,18 +98,19 @@ def mklink(lst, rmap, flink, dstlinks, linksep, linkcnt):
 	return lst
 
 def patchexe(flst, llst, ini: Ini):
+	assert len(flst) > ini.fontcnt and len(flst) <= ini.fontcnt * 2
+
 	# 写码表
 	with open(ini.dstexe, "rb+") as f:
-		# 读取新 base
-		f.seek(0x018)
-		base = struct.unpack("<I", f.read(4))[0] - 0x800
-
-		f.seek(ini.dstfonttbl - base)
+		f.seek(ini.fonttbl - ini.base)
 
 		for off, sz in flst:
-			f.write(struct.pack("<2I", ini.fontbuf+off, sz))
+			assert off <= 0xffffff
+			# f.write(struct.pack("<2I", ini.fontbuf+off, sz))
+			# 采用压缩法
+			f.write(struct.pack("<I", (off << 8) | sz))
 
-		f.seek(ini.linktbl - base)
+		f.seek(ini.linktbl - ini.base)
 
 		for code, secid, pp, func in llst:
 			if pp != 0xFFFFFFFF:
