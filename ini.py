@@ -57,12 +57,12 @@ class Ini:
         return self._hex('fontbuf')
 
     @property
-    def fonttbl(self) -> int:
-        return self._hex('fonttbl')
+    def fontmax(self) -> int:
+        return self._proj.getint('fontmax')
 
     @property
-    def dstfonttbl(self) -> int:
-        return self._hex('dstfonttbl')
+    def fonttbl(self) -> int:
+        return self._hex('fonttbl')
 
     @property
     def fontcnt(self) -> int:

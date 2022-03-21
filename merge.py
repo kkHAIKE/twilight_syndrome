@@ -43,7 +43,9 @@ def checkRawAndGet(fsrc, fdst):
     return arr, dst
 
 mark = '▷▽◲⍽◎0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz' + \
-    'ー。、！？”$%&’￥=:⋯·.‘()―「」『』~‥♥；'
+    '‒ー。、！？”$%&’￥=:⋯·.‘()―「」『』~‥♥；〇♪'
+
+noneed = ''
 
 def makeTbl(src, dst, cs, need):
     cs2 = []

@@ -49,15 +49,15 @@ def asmtxt(rmap, bin: io.BytesIO, txt: str):
 
 def asm(rmap, bin: io.BytesIO, para):
     sm = {
-        'xCF': 0xf,
+        'RUN': 0xf,
         'FINGO': 0xc,
-        'xD5': 0x15,
+        'SEC': 0x15,
         'xCA': 0xa,
-        'xD4': 0x14,
-        'xC4': 4,
+        'FLG': 0x14,
+        'BEAT+': 4,
         'WAIT': 6,
-        'xC2': 2,
-        'xC5': 5,
+        'BEAT-': 2,
+        'BEAT++': 5,
         'xC3': 3,
         'xC9': 9,
     }
@@ -79,15 +79,15 @@ def asm(rmap, bin: io.BytesIO, para):
         elif v[0] == 'XA':
             bin.write(mkcode(3, 8, v[1]))
             bin.write(struct.pack("<H", v[2]))
-        elif v[0] == 'xCE':
+        elif v[0] == 'AWAIT':
             assert v[1] in [0, 2, 1, 3, 4]
             bin.write(mkcode(3, 0xe, v[1]))
             if v[1] in [1, 3, 4]:
                 bin.write(struct.pack("<H", v[2]))
-        elif v[0] == 'xD0':
+        elif v[0] == 'ACT0':
             bin.write(mkcode(3, 0x10+v[1], 0))
             bin.write(struct.pack("<H", v[2]))
-        elif v[0] == 'xD6':
+        elif v[0] == 'ACT1':
             bin.write(mkcode(3, 0x16+v[1], v[2]))
             if v[2] < 2:
                 bin.write(struct.pack("<H", v[3]))
@@ -177,7 +177,7 @@ def dism(para: list, lines: list, asm: bytes, lib: FontLib):
         elif cmd0 == 3:
             # C
             if cmd1 == 0xf:
-                para.append(['xCF', cmd2])
+                para.append(['RUN', cmd2])
             elif cmd1 == 8:
                 v, = struct.unpack("<H", asm[i:i+2])
                 i += 2
@@ -187,38 +187,38 @@ def dism(para: list, lines: list, asm: bytes, lib: FontLib):
                 para.append(['FINGO'])
             elif cmd1 == 0xe:
                 if cmd2 in [0, 2]:
-                    para.append(['xCE', cmd2])
+                    para.append(['AWAIT', cmd2])
                 elif cmd2 in [1, 3, 4]:
                     v, = struct.unpack("<H", asm[i:i+2])
                     i += 2
-                    para.append(['xCE', cmd2, v])
+                    para.append(['AWAIT', cmd2, v])
                 else:
                     assert False, hex(code) + hex(cmd2)
             elif cmd1 == 0x15:
-                para.append(['xD5', cmd2])
+                para.append(['SEC', cmd2])
             elif cmd1 == 0xa:
                 para.append(['xCA'])
             elif cmd1 == 0x14:
-                para.append(['xD4'])
+                para.append(['FLG'])
             elif cmd1 in [0x10, 0x11, 0x12]:
                 v, = struct.unpack("<H", asm[i:i+2])
                 i += 2
-                para.append(['xD0', cmd1 -0x10, v])
+                para.append(['ACT0', cmd1 -0x10, v])
             elif cmd1 in [0x16, 0x17, 0x18]:
-                vv = ['xD6', cmd1 -0x16, cmd2]
+                vv = ['ACT1', cmd1 -0x16, cmd2]
                 if cmd2 < 2:
                     v, = struct.unpack("<H", asm[i:i+2])
                     i += 2
                     vv.append(v)
                 para.append(vv)
             elif cmd1 == 4:
-                para.append(['xC4', cmd2])
+                para.append(['BEAT+', cmd2])
             elif cmd1 == 6:
                 para.append(['WAIT', cmd2])
             elif cmd1 == 2:
-                para.append(['xC2', cmd2])
+                para.append(['BEAT-', cmd2])
             elif cmd1 == 5:
-                para.append(['xC5', cmd2])
+                para.append(['BEAT++', cmd2])
             elif cmd1 == 3:
                 para.append(['xC3'])
             elif cmd1 == 9:
@@ -247,10 +247,12 @@ def linkdec(ini: Ini, lib: FontLib):
 
         ss = set()
 
-        for _ in range(ini.linkcnt):
+        for i in range(ini.linkcnt):
             code, secid, ignore, pp, func = struct.unpack('<2BH2I', f.read(12))
             assert ignore == 0
-            para = [[secid, code>>4, code&0xf, func]]
+            if func != 0:
+                func = hex(func)
+            para = [[secid, code>>4, code&0xf, func, f'I{i+10}']]
 
             dataid = 0
             if linksep is not None and secid >= linksep:

@@ -11,7 +11,7 @@ import json
 from linkdec import asm
 import struct
 
-def mkfont(db, ftbl, fcnt, lib: FontLib, fbin):
+def mkfont(db, ftbl, fcnt, lib: FontLib, fbin, maxsz):
 	cs = read20(ftbl)
 
 	# 先准备 bin
@@ -24,6 +24,8 @@ def mkfont(db, ftbl, fcnt, lib: FontLib, fbin):
 		assert sz > 0, c
 		mpos[c] = (bin.tell(), sz)
 		bin.write(enc(b))
+
+	assert bin.tell() <= maxsz
 
 	with open(fbin, "wb") as f:
 		f.write(bin.getvalue())
@@ -74,7 +76,9 @@ def mklink(lst, rmap, flink, dstlinks, linksep, linkcnt):
 	lst = []
 
 	for v in link:
-		secid, codeH, codeL, func = v[0]
+		secid, codeH, codeL, func, _ = v[0]
+		if isinstance(func, str):
+			func = int(func, 16)
 		pp = 0xFFFFFFFF
 		if len(v) > 1:
 			dataid = 0
@@ -131,8 +135,8 @@ def build(ini: Ini, lib: FontLib):
 	dstlinks = ["{}.{}.bin".format(ini.dstlink, id) for id in ini.linkid()[0]]
 
 	# 生成 字库 lst bin sz
-	flst, rmap = mkfont(db, ftbl, ini.fontcnt, lib, fbin)
+	flst, rmap = mkfont(db, ftbl, ini.fontcnt, lib, fbin, ini.fontmax)
 	print(hex(len(flst)*8))
 	llst = mklink(flst, rmap, flink, dstlinks, ini.linkid()[1], ini.linkcnt)
-	if ini.dstfonttbl > 0:
+	if os.path.exists(ini.dstexe):
 		patchexe(flst, llst, ini)
