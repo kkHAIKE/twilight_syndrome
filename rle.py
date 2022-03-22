@@ -106,6 +106,7 @@ class RangeMap:
         if left is not None:
             if leftOver:
                 left.sz -= 1
+                left.enc[0] -= 1
             else:
                 r.setStart(r.pos + 1)
                 r.sz -= 1
@@ -113,6 +114,7 @@ class RangeMap:
             if rightOver:
                 right.setStart(right.pos + 1)
                 right.sz -= 1
+                right.enc[0] -= 1
             else:
                 r.sz -= 1
         self.put(r)
@@ -266,8 +268,10 @@ def enc(d: bytes):
 
     # 标记递增
     for ss, ee in arr:
-        i = max(ss - 1, 0)
-        while i < min(ee + 1, len(d)):
+        ss -= 1
+        ee += 1
+        i = max(ss, 0)
+        while i < min(ee, len(d)):
             r = getIncr(d[i:ee])
             if r is None:
                 i += 1
@@ -344,3 +348,8 @@ def test():
 
     print(len(encmem.getvalue()), len(data))
     assert decmem.getvalue() == data
+
+def test2():
+    a = b'11112345555'
+    b = enc(a)
+    print(len(b), binascii.b2a_hex(b))
