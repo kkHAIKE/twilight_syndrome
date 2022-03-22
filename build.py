@@ -25,7 +25,7 @@ def mkfont(db, ftbl, fcnt, lib: FontLib, fbin, maxsz):
 		mpos[c] = (bin.tell(), sz)
 		bin.write(enc(b))
 
-	assert bin.tell() <= maxsz
+	assert bin.tell() <= maxsz, bin.tell()
 
 	with open(fbin, "wb") as f:
 		f.write(bin.getvalue())
@@ -102,8 +102,6 @@ def mklink(lst, rmap, flink, dstlinks, linksep, linkcnt):
 	return lst
 
 def patchexe(flst, llst, ini: Ini):
-	assert len(flst) > ini.fontcnt and len(flst) <= ini.fontcnt * 2
-
 	# 写码表
 	with open(ini.dstexe, "rb+") as f:
 		f.seek(ini.fonttbl - ini.base)
@@ -136,7 +134,9 @@ def build(ini: Ini, lib: FontLib):
 
 	# 生成 字库 lst bin sz
 	flst, rmap = mkfont(db, ftbl, ini.fontcnt, lib, fbin, ini.fontmax)
-	print(hex(len(flst)*8))
+	print(len(flst), hex(len(flst)*8), len(flst)<=ini.fontcnt)
+	assert len(flst) > ini.fontcnt and len(flst) <= ini.fontcnt * 2
+
 	llst = mklink(flst, rmap, flink, dstlinks, ini.linkid()[1], ini.linkcnt)
 	if os.path.exists(ini.dstexe):
 		patchexe(flst, llst, ini)
