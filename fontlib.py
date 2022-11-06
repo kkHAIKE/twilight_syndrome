@@ -24,7 +24,9 @@ def readTbl2(fpath):
             assert len(line) == 20, len(line)
 
         for c in line:
-            assert c not in s, c
+            # 1 号有2个
+            if c not in ['十']:
+                assert c not in s, c
             s.add(c)
 
             arr.append(c)
