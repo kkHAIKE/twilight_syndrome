@@ -35,7 +35,7 @@ def checkRawAndGet(fsrc, fdst):
             continue
 
         # print(ctrlRe.findall(s), ",", ctrlRe.findall(dst[i]))
-        # if i in [55]:
+        # if i in [55, 363]:
         #     continue
         assert ctrlRe.findall(s) == ctrlRe.findall(dst[i]), i
     arr = list(ss)

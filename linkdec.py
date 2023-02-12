@@ -104,6 +104,9 @@ def dism(para: list, lines: list, asm: bytes, lib: FontLib):
     if asm == binascii.a2b_hex('010000ca0089038d530034005600fb0050019d0013003f0039004200f200008100854e0034002d00a50202001300020008002c00090016001a00fd00fd00fd000086008a11c87f00100034005c006f00ccc402ce00cf00d402ceffff'):
         asm = binascii.a2b_hex('010000ca0089038d530034005600fb0050019d0013003f0039004200f200008100854e0034002d00a50202001300020008002c00090016001a00fd00fd00fd00008611c87f00100034005c006f00008accc402ce00cf00d402ceffff')
         #[[10, 13, 1, '0x8005ba0c', 'I155'], ['FIRST', 1], ['xCA'], ['TEXT', '<BEGIN><HEAD,3>ユカリ:待ってチサト！<RET><PRESS,0>ミカを置いていくわけには···<NEXT>'], ['XA', 17, 127], ['TEXT', 'たカンジ<END>'], ['BEAT+', 204], ['AWAIT', 2], ['RUN', 0], ['FLG'], ['AWAIT', 2], ['FIN']]
+    elif asm == binascii.a2b_hex('020003cf00d40089028d4e003400fb00fd00fd00fd00b70204001000f3000086029700c302cfffff'):
+        asm = binascii.a2b_hex('020003cf00d40089028d4e003400fb00fd00fd00fd00b70204001000f300008600c302cfffff')
+        # [[3, 13, 1, 0, 'I208'], ['FIRST', 2], ['RUN', 3], ['FLG'], ['TEXT', '<BEGIN><HEAD,2>ミカ:···消えた？<NEXT>'], ['xC3'], ['RUN', 2], ['FIN']]
 
     i = 2
     final = False
@@ -231,6 +234,10 @@ def dism(para: list, lines: list, asm: bytes, lib: FontLib):
                 v, = struct.unpack("<H", asm[i:i+2])
                 i += 2
                 para.append(['xC1', v])
+            elif cmd1 == 0xd:
+                v, = struct.unpack("<H", asm[i:i+2])
+                i += 2
+                para.append(['xCD', v])
             else:
                 assert False, hex(code)
 
