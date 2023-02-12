@@ -43,7 +43,7 @@ def checkRawAndGet(fsrc, fdst):
     return arr, dst
 
 mark = '▷▽◲⍽◎0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz' + \
-    '‒ー。、！？”$%&’￥=:⋯·.‘()―「」『』~‥♥；〇♪'
+    '‒ー。、！？”$%&’￥=:⋯·.‘()―「」『』~‥♥；〇♪，◯゛'
 
 noneed = ''
 
