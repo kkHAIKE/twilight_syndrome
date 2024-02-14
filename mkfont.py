@@ -45,7 +45,7 @@ def readFnt(fpath):
     return name, arr
 
 def onefont(img, c: FontInfo):
-    lp = 0
+    lp = 0 # left pos
     flag = False
     for xi in range(c.w):
         for yi in range(c.h):
@@ -57,7 +57,7 @@ def onefont(img, c: FontInfo):
         if flag:
             break
 
-    rp = 0
+    rp = 0 # right pos
     flag = False
     for xi in range(c.w-1, -1, -1):
         for yi in range(c.h):
@@ -75,11 +75,11 @@ def onefont(img, c: FontInfo):
     yo = c.yo + 1
     sx, sy = c.x + lp, c.y
     h = c.h
+    dy = 0
     if yo < 0:
         h += yo
         sy -= yo
-        dy = 0
-    else:
+    elif h < 16:
         dy = yo
     h = min(h, 16)
     assert h > 2

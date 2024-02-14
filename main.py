@@ -16,7 +16,7 @@ def main(argv):
         fontdec(ini)
     elif argv[1] == 'linkdec':
         linkdec(ini, FontLib(ini))
-    elif argv[1] == 'dumpsz':
+    elif argv[1] == 'dumpsz': # extract width from exe
         dumpsz(ini, FontLib(ini))
     elif argv[1] == 'merge':
         merge(ini)
