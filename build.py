@@ -11,7 +11,27 @@ import json
 from linkdec import asm
 import struct
 
-def mkfont(db, ftbl, fcnt, lib: FontLib, fbin, maxsz):
+def enc2(b: bytes):
+	for x in b:
+		lx = x & 0xf
+		hx = x >> 4
+		if lx not in [0, 4, 6] or hx not in [0, 4, 6]:
+			return b
+
+	ret = io.BytesIO()
+	# magic number
+	ret.write(b'\x1E')
+	assert len(b) == 16*8
+	for i in range(0, len(b), 2):
+		lx0, hx0 = b[i] & 0xf, b[i] >> 4
+		lx1, hx1 = b[i+1] & 0xf, b[i+1] >> 4
+
+		ret.write(bytes([
+			(lx0 >> 1) | (hx0 << 1) | (lx1 << 3) | (hx1 << 5)
+		]))
+	return ret.getvalue()
+
+def mkfont(db, ftbl, fcnt, lib: FontLib, fbin, maxsz, z):
 	cs = read20(ftbl)
 
 	# 先准备 bin
@@ -23,6 +43,8 @@ def mkfont(db, ftbl, fcnt, lib: FontLib, fbin, maxsz):
 		b, sz = db[c]
 		assert sz > 0, c
 		mpos[c] = (bin.tell(), sz)
+		if z:
+			b = enc2(b)
 		bin.write(enc(b))
 
 	assert bin.tell() <= maxsz, bin.tell()
@@ -133,7 +155,7 @@ def build(ini: Ini, lib: FontLib):
 	dstlinks = ["{}.{}.bin".format(ini.dstlink, id) for id in ini.linkid()[0]]
 
 	# 生成 字库 lst bin sz
-	flst, rmap = mkfont(db, ftbl, ini.fontcnt, lib, fbin, ini.fontmax)
+	flst, rmap = mkfont(db, ftbl, ini.fontcnt, lib, fbin, ini.fontmax, ini.fontzip)
 	print(len(flst), hex(len(flst)*8), len(flst)<=ini.fontcnt)
 	assert len(flst) > ini.fontcnt and len(flst) <= ini.fontcnt * 2
 

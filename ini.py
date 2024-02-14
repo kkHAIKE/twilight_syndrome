@@ -69,6 +69,10 @@ class Ini:
         return self._proj.getint('fontcnt')
 
     @property
+    def fontzip(self) -> bool:
+        return self._proj.getboolean('fontzip')
+
+    @property
     def linkbuf(self) -> int:
         return self._hex('linkbuf')
 
