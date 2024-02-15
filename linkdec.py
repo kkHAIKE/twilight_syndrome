@@ -91,8 +91,11 @@ def asm(rmap, bin: io.BytesIO, para):
             bin.write(mkcode(3, 0x16+v[1], v[2]))
             if v[2] < 2:
                 bin.write(struct.pack("<H", v[3]))
+        elif v[0] in ['xC1', 'xCD']:
+            bin.write(mkcode(3, 1 if v[0] == 'xC1' else 0xd, 0))
+            bin.write(struct.pack("<H", v[1]))
         else:
-            assert False
+            assert False, v[0]
 
 
 def dism(para: list, lines: list, asm: bytes, lib: FontLib):
