@@ -6,6 +6,7 @@ from linkdec import linkdec
 from fontlib import (FontLib, dumpsz)
 from ini import Ini
 from merge import merge
+from patch import patch
 
 def main(argv):
     conf = configparser.ConfigParser()
@@ -22,6 +23,8 @@ def main(argv):
         merge(ini)
     elif argv[1] == 'build':
         build(ini, FontLib(ini))
+    elif argv[1] == 'patch':
+        patch(ini)
     elif argv[1] == 'test':
         fontlib = FontLib(ini)
         for c in "ユカリチサトミシマ":
