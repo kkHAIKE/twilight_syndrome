@@ -98,7 +98,8 @@ def headfix(line, di):
         n = int(m.group(1))
         idx = line.index(':', m.end(0))
         n2 = idx - m.end(0)
-        assert n2 > 0 and n2 <= 4, "{},{},{},{}".format(n, n2, di, line)
+        # チサトの母
+        assert n2 > 0 and n2 <= 5, "{},{},{},{}".format(n, n2, di, line)
         if n != n2:
             line = line[:m.start(1)] + str(n2) + line[m.end(1):]
     return line
