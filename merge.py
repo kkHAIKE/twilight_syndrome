@@ -43,7 +43,7 @@ def checkRawAndGet(fsrc, fdst):
     return arr, dst
 
 mark = '▷▽◲⍽◎0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz' + \
-    '‒ー。、！？”$%&’￥=:⋯·.‘()―「」『』~‥♥；〇♪，◯゛'
+    '‒ー。、！？”$%&’￥=:⋯·.‘()―「」『』~‥♥；〇♪，◯゛・↑←'
 
 noneed = ''
 
@@ -98,8 +98,8 @@ def headfix(line, di):
         n = int(m.group(1))
         idx = line.index(':', m.end(0))
         n2 = idx - m.end(0)
-        # チサトの母
-        assert n2 > 0 and n2 <= 5, "{},{},{},{}".format(n, n2, di, line)
+        # ユカリ·チサト
+        assert n2 > 0 and n2 <= 7, "{},{},{},{}".format(n, n2, di, line)
         if n != n2:
             line = line[:m.start(1)] + str(n2) + line[m.end(1):]
     return line
