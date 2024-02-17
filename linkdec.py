@@ -21,6 +21,7 @@ def asmtxt(rmap, bin: io.BytesIO, txt: str):
         'END': 0xa,
         'HEAD': 0xd,
         'SEL': 0x17,
+        'SEL2': 0x27,
         'COL': 2,
         'CASE': 0x18,
         'CEND': 0x28,
@@ -170,9 +171,9 @@ def dism(para: list, lines: list, asm: bytes, lib: FontLib):
                 intxt = False
             elif cmd1 == 0xd:
                 txt.write("<HEAD,{}>".format(cmd2))
-            elif cmd1 == 0x17: # a7
+            elif cmd1 == 0x17 or cmd1 == 0x27: # 0x27 no rand title
                 final_97 = cmd2
-                txt.write("<SEL,{}>".format(cmd2))
+                txt.write("<SEL{},{}>".format('2' if cmd1 == 0x27 else '', cmd2))
             elif cmd1 == 2:
                 txt.write("<COL,{}>".format(cmd2))
             elif cmd1 == 0x18:
